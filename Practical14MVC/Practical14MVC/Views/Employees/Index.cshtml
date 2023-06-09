@@ -1,0 +1,130 @@
+﻿@using PagedList.Mvc;
+@model PagedList.IPagedList<Practical14MVC.Models.Employee>
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+
+<p>
+    @using (Html.BeginForm("Index", "Employees", FormMethod.Get))
+    {
+        <b> Search by</b><b> Name</b>
+        <br />
+
+        @Html.TextBox("search",null,new { @id="txtsearch"})
+        
+
+    }
+</p>
+<table class="table" id="tblemployee">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.First().Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.First().DOB)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.First().Age)
+        </th>
+        <th>Action</th>
+        <th></th>
+    </tr>
+    @if (Model.Count() == 0)
+    {
+
+        <tr>
+            <td colspan="5">
+                No record found
+            </td>
+        </tr>
+
+
+
+    }
+    else
+    {
+        foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DOB)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Age)
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.id }) |
+                    @Html.ActionLink("Details", "Details", new { id = item.id }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.id })
+                </td>
+            </tr>
+        }
+
+    }
+
+</table>
+<div id="container" style="margin-left: 20px">
+    <p></p>
+    <p></p>
+    <div class="pagination" style="margin-left: 400px">
+        Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber)
+        of @Model.PageCount   @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchby = Request.QueryString["searchby"], search = Request.QueryString["search"] }), new PagedListRenderOptions() { Display = PagedListDisplayMode.IfNeeded, })
+    </div>
+</div>
+
+
+@section scripts{
+    <script defer>
+
+
+        const searchbar = document.getElementById("txtsearch")
+        searchbar.addEventListener('keyup', function () {
+            GetEmployee();
+        })
+
+        function GetEmployee() {
+            var EmployeeName = $.trim($("#txtsearch").val());
+            $.ajax({
+                type: "POST",
+                url: "/Employees/searchemp",
+                data: "{EmpName:'" + EmployeeName + "'}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (model) {
+                    var table = $("#tblemployee");
+                    table.find("tr:not(:first)").remove();
+                    $.each(model, function (i, Emp) {
+                        var table = $("#tblemployee");
+                        var row = table[0].insertRow(-1);
+                        const timestamp = parseInt(Emp.DOB.substr(6));
+                        const date = new Date(timestamp);
+                        const formattedDate = date.toLocaleDateString('en-GB');
+                        $(row).append("<td />");
+                        $(row).find("td").eq(0).html(Emp.Name);
+                        $(row).append("<td />");
+                        $(row).find("td").eq(1).html(formattedDate);
+                        $(row).append("<td />");
+                        $(row).find("td").eq(2).html(Emp.Age);
+                        $(row).append(`<td> <a href='/Employees/Edit/${Emp.id}'>  Edit </a><a href='./Details/${Emp.id}'> | Details</a> 
+ <a href='/Employees/Delete/${Emp.id}'> | Delete</a></td>`)
+
+                    });
+                }
+            });
+        }
+
+
+    </script>
+    
+    
+    
+    }
